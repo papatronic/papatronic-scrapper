@@ -1,0 +1,36 @@
+{
+  "name": "papatronic-scrapper",
+  "version": "1.0.0",
+  "description": "web scrapper for SNIIM page",
+  "main": "cron.js",
+  "scripts": {
+    "test": "jest"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/papatronic/papatronic-scrapper.git"
+  },
+  "keywords": [
+    "node",
+    "postgres",
+    "node-cron"
+  ],
+  "author": "rcvt",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/papatronic/papatronic-scrapper/issues"
+  },
+  "homepage": "https://github.com/papatronic/papatronic-scrapper#readme",
+  "dependencies": {
+    "cheerio": "1.0.0-rc.3",
+    "node-cron": "2.0.3",
+    "pg": "7.12.0",
+    "request": "2.88.0",
+    "request-promise": "4.2.4"
+  },
+  "devDependencies": {
+    "eslint": "5.16.0",
+    "eslint-config-airbnb-base": "13.2.0",
+    "eslint-plugin-import": "2.18.2"
+  }
+}
