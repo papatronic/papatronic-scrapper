@@ -1,0 +1,24 @@
+{
+    "baseURL": "http://www.economia-sniim.gob.mx/nuevo/Consultas/MercadosNacionales/PreciosDeMercado/Agricolas/ResultadosConsultaFechaFrutasYHortalizas.aspx?OrigenId=-1&Origen=Todos&Destino=Todos&DestinoId=-1&PreciosPorId=2&RegistrosPorPagina=1000",
+    "params": {
+        "fechaInicio": "",
+        "fechaFinal": "",
+        "ProductoId": ""
+    },
+    "productIDS": [{
+        "id": 740,
+        "nombre": "Papa Alpha"
+    },{
+        "id": 748,
+        "nombre": "Papa Galeana"
+    },{
+        "id": 749,
+        "nombre": "Papa Gema"
+    },{
+        "id": 753,
+        "nombre": "Papa Marciana"
+    },{
+        "id": 767,
+        "nombre": "Papa San José"
+    }]
+}

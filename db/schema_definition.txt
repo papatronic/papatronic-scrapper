@@ -1,0 +1,43 @@
+-- URL: https://dbdiagram.io/d
+
+Table Prediction {
+  PredictionID int [pk]
+  CreatedAt datetime [default: `now()`]
+  UpdatedAt datetime [default: `now()`]
+  PredictedPrice int [not null]
+  PredictionDate datetime [not null]
+  SourceMarketID int [not null]
+  EndMarketID int [not null]
+}
+
+Table Price {
+  PriceID int [pk]
+  CreatedAt datetime [default: `now()`]
+  UpdatedAt datetime [default: `now()`]
+  MinPrice int [not null]
+  MaxPrice int [not null]
+  AvgPrice int [not null]
+  SourceMarketID int [not null]
+  EndMarketID int [not null]
+  PotatoID int [not null]
+}
+
+Table Market {
+  MarketID int [pk]
+  CreatedAt datetime [default: `now()`]
+  UpdatedAt datetime [default: `now()`]
+  MarketName varchar
+}
+
+Table Potato {
+  PotatoID int [pk]
+  CreatedAt datetime [default: `now()`]
+  UpdatedAt datetime [default: `now()`]
+  PotatoName varchar
+}
+
+Ref: Prediction.SourceMarketID > Market.MarketID
+Ref: Prediction.EndMarketID > Market.MarketID
+Ref: Price.SourceMarketID > Market.MarketID
+Ref: Price.EndMarketID > Market.MarketID
+Ref: Price.PotatoID > Potato.PotatoID

@@ -18,6 +18,8 @@
 
 * [Eslint](https://eslint.org/)
 
+* [Moment.js](https://momentjs.com/)
+
 ### Notes
 
 > Use npm ci to install dependencies. That's why the package-lock is included.

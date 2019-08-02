@@ -2,9 +2,9 @@
   "name": "papatronic-scrapper",
   "version": "1.0.0",
   "description": "web scrapper for SNIIM page",
-  "main": "cron.js",
+  "main": "scrapper.js",
   "scripts": {
-    "test": "jest"
+    "start": "node scrapper.js"
   },
   "repository": {
     "type": "git",
@@ -23,6 +23,8 @@
   "homepage": "https://github.com/papatronic/papatronic-scrapper#readme",
   "dependencies": {
     "cheerio": "1.0.0-rc.3",
+    "dotenv": "8.0.0",
+    "moment": "2.24.0",
     "node-cron": "2.0.3",
     "pg": "7.12.0",
     "request": "2.88.0",

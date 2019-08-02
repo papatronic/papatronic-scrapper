@@ -1,0 +1,19 @@
+version: "3"
+
+services:
+
+  postgresql:
+    env_file:
+      - ./database.env
+    image: bitnami/postgresql:11
+    ports:
+      - "5432:5432"
+    volumes:
+      - "${PATH OF VOLUME DATA}:/bitnami/postgresql"
+      - "./schema.sql:/docker-entrypoint-initdb.d/init.sql"
+    networks: 
+      - database
+
+networks:
+  database:
+    driver: bridge

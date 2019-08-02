@@ -1,0 +1,5 @@
+{
+    "potatoes": {
+        "FETCH_ALL_POTATOES": "SELECT * FROM Potato;"
+    }
+}
