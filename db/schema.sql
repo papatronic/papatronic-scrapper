@@ -33,8 +33,10 @@ CREATE TABLE Price (
     MinPrice INT NOT NULL, -- Precio mínimo
     MaxPrice INT NOT NULL, -- Precio máximo
     AvgPrice INT NOT NULL, -- Precio frecuente
+    Observations VARCHAR NULL, -- Observaciones realizadas por el SNIIM
     SourceMarketID INT NOT NULL, -- El ID del mercado de orígen
     EndMarketID INT NOT NULL, -- El ID del mercado de destino
+    TypeOfPrice INT NOT NULL, -- El tipo de precio (presentación comercial o kilogramo calculado)
     PotatoID INT NOT NULL, -- El ID del tipo de la papa a la cual le corresponde el precio
     FOREIGN KEY (SourceMarketID) REFERENCES Market(MarketID),
     FOREIGN KEY (EndMarketID) REFERENCES Market(MarketID),
