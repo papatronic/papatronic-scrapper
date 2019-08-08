@@ -23,6 +23,8 @@ CREATE TABLE Potato (
     PotatoName VARCHAR(20) NOT NULL
 );
 
+CREATE TYPE SNIIMPresentationEnum AS ENUM ('COMERCIAL', 'CALCULADO');
+
 -- En ésta tabla se almacenarán los precios tal cual aparecen en el SNIIM
 -- Nota: los precios se almacenarán en centavos, es decir:
 -- si la papa cuesta 13.50xKG en base de datos se almacenará como 13.50 * 100 = 1350
@@ -40,7 +42,7 @@ CREATE TABLE Price (
     Observations VARCHAR NULL, -- Observaciones realizadas por el SNIIM
     SourceMarketID INT NOT NULL, -- El ID del mercado de orígen
     EndMarketID INT NOT NULL, -- El ID del mercado de destino
-    SNIIMPresentation INT NOT NULL, -- El tipo de precio que da el SNIIM (presentación comercial o kilogramo calculado)
+    SNIIMPresentation SNIIMPresentationEnum NOT NULL, -- El tipo de precio que da el SNIIM (COMERCIAL o CALCULADO)
     MarketPresentation VARCHAR NOT NULL, -- El tipo de presentación en el mercado (kilogramos, arpillas, etc)
     PotatoID INT NOT NULL, -- El ID del tipo de la papa a la cual le corresponde el precio
     FOREIGN KEY (SourceMarketID) REFERENCES Market(MarketID),
