@@ -35,7 +35,8 @@ CREATE TABLE Price (
     PriceID SERIAL PRIMARY KEY,
     CreatedAt TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     UpdatedAt TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    SNIIMDate VARCHAR NOT NULL, -- Fecha que aparece en el SNIIM DD/MM/YYYY
+    SNIIMDateString VARCHAR NOT NULL, -- Fecha que aparece en el SNIIM DD/MM/YYYY
+    SNIIMDateDate DATE NOT NULL, -- Fecha que aparece en el SNIIM en formato de fecha
     MinPrice INT NOT NULL, -- Precio mínimo
     MaxPrice INT NOT NULL, -- Precio máximo
     AvgPrice INT NOT NULL, -- Precio frecuente
