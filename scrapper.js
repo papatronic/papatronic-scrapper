@@ -198,9 +198,11 @@ async function fetchHistoricValues(potatoes) {
   }
 }
 
-(async () => {
+async function run() {
   const potatoes = await fetchPotatoes();
   await crawlCalculatedPrice(potatoes);
   await crawlCommercialPrice(potatoes);
   await disconnectPool();
-})();
+}
+
+module.exports = run;
