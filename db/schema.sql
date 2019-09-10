@@ -24,7 +24,6 @@ CREATE TABLE Potato (
 );
 
 CREATE TYPE SNIIMPresentationEnum AS ENUM ('COMERCIAL', 'CALCULADO');
-
 -- En ésta tabla se almacenarán los precios tal cual aparecen en el SNIIM
 -- Nota: los precios se almacenarán en centavos, es decir:
 -- si la papa cuesta 13.50xKG en base de datos se almacenará como 13.50 * 100 = 1350
