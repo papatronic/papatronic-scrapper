@@ -1,5 +1,5 @@
 require('dotenv').config();
-const moment = require('moment');
+const moment = require('moment-timezone');
 const cheerio = require('cheerio');
 const rp = require('request-promise');
 const logger = require('./logger');
@@ -38,7 +38,7 @@ async function fetchOrCreateMarket(name) {
       markets.push(createdMarket);
       return createdMarket;
     }
-    logger.log('info', `Market ${foundMarket.name} found in database`);
+    logger.log('info', `Market ${foundMarket.marketname} found in database`);
     markets.push(foundMarket);
     return foundMarket;
   } catch (error) {
@@ -53,29 +53,33 @@ async function fetchOrCreateMarket(name) {
  * @param {number} potatoID - Int representing the ID of the Potato which this price references to
  * @param {string} sniimPresentation - Enum (COMERCIAL, CALCULADO) representing the presentation of the fetched values from the webpage. Analogous to sniimPriceType (1 = 'COMERCIAL', 2 = 'CALCULADO')
  */
-async function insertRows(rows, potatoID, sniimPresentation) {
-  for (const row of rows) {
-    const rowLength = row.length;
-    if (rowLength === 7 || rowLength === 8 && row[0] !== 'Fecha') {
-      const sourceMarket = await fetchOrCreateMarket(row[2]);
-      const endMarket = await fetchOrCreateMarket(row[3]);
+async function insertRows(rows, potatoID, sniimPresentation, source) {
+  for (let index = 0, rowsLength = rows.length; index < rowsLength; index++) {
+    const row = rows[index];
+    row[0] = row[0].split('/').reverse().join('-');
+    if (moment(row[0]).format() !== 'Invalid date') {
+      let sourceMarket;
+      let endMarket;
+      if (source) {
+        sourceMarket = await fetchOrCreateMarket('Sinaloa');
+        endMarket = await fetchOrCreateMarket(row[2]);
+      } else {
+        sourceMarket = await fetchOrCreateMarket(row[2]);
+        endMarket = await fetchOrCreateMarket('Sinaloa');
+      }
       const values = [...row];
-      values.splice(2, 2);
-      values[0] = values[0].split('/').reverse().join('-');
-      values.splice(1, 0, new Date(values[0]));
-      values[3] = values[3].replace(',', '');
-      values[4] = values[4].replace(',', '');
-      values[5] = values[5].replace(',', '');
-      values[3] = Math.round(Number(values[3]) * 100);
-      values[4] = Math.round(Number(values[4]) * 100);
-      values[5] = Math.round(Number(values[5]) * 100);
+      values.splice(2, 1);
+      values.splice(1, 0, moment(values[0]).toDate());
+      values[3] = values[3].replace('.', '');
+      values[4] = values[4].replace('.', '');
+      values[5] = values[5].replace('.', '');
       try {
-        const [returnedRow] = await sendQuery(rowLength === 7 ? Queries.price.INSERT_PRICE_NO_OBS : Queries.price.INSERT_PRICE_OBS, [...values, potatoID, sourceMarket.marketid, endMarket.marketid, sniimPresentation]);
+        const [returnedRow] = await sendQuery(row.length === 7 ? Queries.price.INSERT_PRICE_OBS : Queries.price.INSERT_PRICE_NO_OBS, [...values, potatoID, sourceMarket.marketid, endMarket.marketid, sniimPresentation]);
         logger.log('info', `Price ${returnedRow.priceid} created.`);
       } catch (error) {
         logger.log('error', `An error occurred while creating the Price in Postgres. ${error}.`);
         process.exit(-1);
-      }
+      } 
     }
   }
 }
@@ -83,14 +87,13 @@ async function insertRows(rows, potatoID, sniimPresentation) {
 /**
  * Crawls the webpage and filters the table rows in order to clear them and store them in Postgres.
  * @param {string} url - The URL from where to fetch the records
- * @param {number} potatoSNIIMId - The SNIIM ID of the potato from where to get the records
  */
-async function fetchAndFilterWebpage(url, potatoSNIIMId) {
+async function fetchAndFilterWebpage(url) {
   let $;
   try {
     $ = await rp({
       method: 'POST',
-      uri: `${url}&ProductoId=${potatoSNIIMId}`,
+      uri: url,
       transform: function (body) {
         return cheerio.load(body);
       }
@@ -116,7 +119,7 @@ async function fetchAndFilterWebpage(url, potatoSNIIMId) {
 }
 
 /**
- * Generates a URL that the function crawlWebPage will fetch. By default it returns URL's with a day difference.
+ * Generates a pair of URLs that the function crawlWebPage will fetch. By default it returns both URL's with a day difference. One URL corresponds from prices leaving Sinaloa and the other places coming to Sinaloa.
  * @param {string} sniimPriceType - Int (1 or 2) representing which prices the URL must fetch.
  * @param {number} rowsPerPage - Int representing how many records the URL will fetch. Defaults to 1000.
  */
@@ -125,7 +128,10 @@ function generateURL(sniimPriceType, rowsPerPage = 1000) {
   const month = moment().month() + 1;
   const yesterday = `${moment().subtract(1, 'days').format('DD')}/${month}/${year}`;
   const today = `${moment().format('DD')}/${month}/${year}`;
-  return `${config.baseURL}&fechaInicio=${yesterday}&fechaFinal=${today}&PreciosPorId=${sniimPriceType}&RegistrosPorPagina=${rowsPerPage}`;
+  return [
+    `${config.baseURL}&fechaInicio=${yesterday}&fechaFinal=${today}&PreciosPorId=${sniimPriceType}&RegistrosPorPagina=${rowsPerPage}&OrigenId=25$Origen=Sinaloa&DestinoId=-1&Destino=Todos`,
+    `${config.baseURL}&fechaInicio=${yesterday}&fechaFinal=${today}&PreciosPorId=${sniimPriceType}&RegistrosPorPagina=${rowsPerPage}&OrigenId=-1$Origen=Todos&DestinoId=250&Destino=Sinaloa`,
+  ];
 }
 
 /**
@@ -134,75 +140,51 @@ function generateURL(sniimPriceType, rowsPerPage = 1000) {
  */
 async function crawlCalculatedPrice(potatoes) {
   const CALCULATED_PRICE = 2;
-  const CALCULATED_PRICE_URL = generateURL(CALCULATED_PRICE, 50000);
-  for (const { potatosniimid, potatoid } of potatoes) {
-    logger.log('info', `Fetching ${CALCULATED_PRICE_URL}`);
-    const webPageRows = await fetchAndFilterWebpage(CALCULATED_PRICE_URL, potatosniimid);
-    await insertRows(webPageRows, potatoid, 'CALCULADO');
-  }
-}
-
-/**
- * Starts the process of crawling a webpage (with the commercial price), filtering and clearing the data, then storing it into Postgres
- * @param {array} potatoes - The potatoes fetched from database
- */
-async function crawlCommercialPrice(potatoes) {
-  const COMMERCIAL_PRICE = 1;
-  const COMMERCIAL_PRICE_URL = generateURL(COMMERCIAL_PRICE, 50000);
-  for (const { potatosniimid, potatoid } of potatoes) {
-    logger.log('info', `Fetching ${COMMERCIAL_PRICE_URL}`);
-    const webPageRows = await fetchAndFilterWebpage(COMMERCIAL_PRICE_URL, potatosniimid);
-    await insertRows(webPageRows, potatoid, 'COMERCIAL');
-  }
-}
-
-
-/**
- * Generates an array with URL of years in ascending order - starting from January 1st and finishing on December 31st of each year.
- * @param {number} sniimPriceType - Int (1 or 2) representing which prices the URL must fetch.
- * @param {number} rowsPerPage - Int representing how many records the URL will fetch. Defaults to 1000.
- * @param {number} yearsBeforeNow - Int representing the years to substract from this year. Defaults to 10 years.
- */
-function generateHistoricURLs(sniimPriceType, rowsPerPage = 1000, yearsBeforeNow = 10) {
-  const urls = [];
-  let currentYear = moment().subtract(yearsBeforeNow, 'years').year();
-  for (let index = 0; index < yearsBeforeNow; index++) {
-    const start = `01/01/${currentYear}`;
-    const finish = `31/12/${currentYear}`;
-    urls.push(`${config.baseURL}&fechaInicio=${start}&fechaFinal=${finish}&PreciosPorId=${sniimPriceType}&RegistrosPorPagina=${rowsPerPage}`);
-    currentYear += 1;
-  }
-  return urls;
-}
- 
-/**
- * Crawls the webpage year by year and stores the values in database
- * @param {array} potatoes - The potatoes fetched from database
- */
-async function fetchHistoricValues(potatoes) {
-  const calculatedURLS = generateHistoricURLs(2, 50000, 30);
-  for (const url of calculatedURLS) {
+  const urls = generateURL(CALCULATED_PRICE, 50000);
+  for (const url of urls) {
     for (const { potatosniimid, potatoid } of potatoes) {
       logger.log('info', `Fetching ${url}`);
       const webPageRows = await fetchAndFilterWebpage(url, potatosniimid);
       await insertRows(webPageRows, potatoid, 'CALCULADO');
-    }
+    } 
   }
-  const commercialURLS = generateHistoricURLs(1, 50000, 30);
-  for (const url of commercialURLS) {
+}
+
+/**
+ * Generates a two URL's to fetch all historic values.
+ */
+function generateHistoricURLs() {
+  return [{
+    url: `${config.baseURL}?&fechaInicio=01/01/1998&fechaFinal=${moment().format('DD/MM/YYYY')}&PreciosPorId=2&RegistrosPorPagina=1000000&OrigenId=25&Origen=Sinaloa&DestinoId=-1&Destino=Todos`, source: true,
+  }, {
+    url: `${config.baseURL}?&fechaInicio=01/01/1998&fechaFinal=${moment().format('DD/MM/YYYY')}&PreciosPorId=2&RegistrosPorPagina=1000000&OrigenId=-1&Origen=Todos&DestinoId=250&Destino=Sinaloa`, source: false
+  }];
+}
+
+/**
+ * Generates a single URL to fetch all historic values. Is extremely intensive.
+ * @param {array} potatoes - The potatoes fetched from database
+ */
+async function fetchHistoricValues(potatoes) {
+  const calculatedURLS = generateHistoricURLs();
+  for (const { url, source } of calculatedURLS) {
     for (const { potatosniimid, potatoid } of potatoes) {
-      logger.log('info', `Fetching ${url}`);
-      const webPageRows = await fetchAndFilterWebpage(url, potatosniimid);
-      await insertRows(webPageRows, potatoid, 'COMERCIAL');
+      const urlWithPotatoe = `${url}&ProductoId=${potatosniimid}`;
+      logger.log('info', `Fetching ${urlWithPotatoe}`);
+      const webPageRows = await fetchAndFilterWebpage(urlWithPotatoe);
+      await insertRows(webPageRows, potatoid, 'CALCULADO', source);
     }
   }
 }
 
 async function run() {
   const potatoes = await fetchPotatoes();
-  await crawlCalculatedPrice(potatoes);
-  await crawlCommercialPrice(potatoes);
+  await fetchHistoricValues(potatoes);
   await disconnectPool();
 }
+
+(async () => {
+  await run();
+})();
 
 module.exports = run;
