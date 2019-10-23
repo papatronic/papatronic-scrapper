@@ -15,8 +15,11 @@ pool.on('error', (err, client) => {
   process.exit(-1);
 });
 
-// Async function that expects a full SQL statement and it's variables
-// Both statement and variables will be parsed and sanitized by Node-Postgres
+/**
+ * Executes a query with parameters to Postgres.
+ * @param {string} statement - SQL statement.
+ * @param {[string]} variables - The variables that will be parsed in the statement.
+ */
 async function sendQuery(statement, variables) {
   const client = await pool.connect()
   try {

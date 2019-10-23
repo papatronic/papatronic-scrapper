@@ -1,9 +1,11 @@
 {
-    "baseURL": "http://www.economia-sniim.gob.mx/nuevo/Consultas/MercadosNacionales/PreciosDeMercado/Agricolas/ResultadosConsultaFechaFrutasYHortalizas.aspx?OrigenId=-1&Origen=Todos&Destino=Todos&DestinoId=-1&PreciosPorId=2&RegistrosPorPagina=1000",
+    "baseURL": "http://www.economia-sniim.gob.mx/nuevo/Consultas/MercadosNacionales/PreciosDeMercado/Agricolas/ResultadosConsultaFechaFrutasYHortalizas.aspx",
     "params": {
         "fechaInicio": "",
         "fechaFinal": "",
-        "ProductoId": ""
+        "ProductoId": "",
+        "PreciosPorId": "",
+        "RegistrosPorPagina": ""
     },
     "productIDS": [{
         "id": 740,

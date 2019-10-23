@@ -20,6 +20,11 @@ Table Price {
   SourceMarketID int [not null]
   EndMarketID int [not null]
   PotatoID int [not null]
+  SNIIMDateString varchar [not null]
+  SNIIMDateDate datetime [not null]
+  Observations varchar
+  SNIIMPresentation varchar [not null]
+  MarketPresentation varchar [not null]
 }
 
 Table Market {

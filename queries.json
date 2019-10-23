@@ -1,5 +1,14 @@
 {
     "potatoes": {
         "FETCH_ALL_POTATOES": "SELECT * FROM Potato;"
+    },
+    "market": {
+        "INSERT_MARKET": "INSERT INTO Market(MarketName) VALUES($1) RETURNING *;",
+        "GET_BY_ID": "SELECT * FROM Market WHERE MarketID = $1;",
+        "GET_BY_NAME": "SELECT * FROM Market WHERE MarketName = $1;"
+    },
+    "price": {
+        "INSERT_PRICE_NO_OBS": "INSERT INTO Price(SNIIMDateString,SNIIMDateDate,MarketPresentation,MinPrice,MaxPrice,AvgPrice,PotatoID,SourceMarketID,EndMarketID,SNIIMPresentation) VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10) RETURNING *;",
+        "INSERT_PRICE_OBS": "INSERT INTO Price(SNIIMDateString,SNIIMDateDate,MarketPresentation,MinPrice,MaxPrice,AvgPrice,Observations,PotatoID,SourceMarketID,EndMarketID,SNIIMPresentation) VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11) RETURNING *;"
     }
 }

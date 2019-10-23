@@ -12,13 +12,15 @@
 
 * [node-postgres](https://node-postgres.com/)
 
-* [node-cron](https://github.com/kelektiv/node-cron)
+* [node-schedule](https://github.com/node-schedule/node-schedule)
 
 * [request-promise](https://github.com/request/request-promise)
 
 * [Eslint](https://eslint.org/)
 
 * [Moment.js](https://momentjs.com/)
+
+* [Winston](https://github.com/winstonjs/winston)
 
 ### Notes
 
