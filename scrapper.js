@@ -1,4 +1,3 @@
-require('dotenv').config();
 const moment = require('moment-timezone');
 const cheerio = require('cheerio');
 const rp = require('request-promise');
@@ -150,41 +149,9 @@ async function crawlCalculatedPrice(potatoes) {
   }
 }
 
-/**
- * Generates a two URL's to fetch all historic values.
- */
-function generateHistoricURLs() {
-  return [{
-    url: `${config.baseURL}?&fechaInicio=01/01/1998&fechaFinal=${moment().format('DD/MM/YYYY')}&PreciosPorId=2&RegistrosPorPagina=1000000&OrigenId=25&Origen=Sinaloa&DestinoId=-1&Destino=Todos`, source: true,
-  }, {
-    url: `${config.baseURL}?&fechaInicio=01/01/1998&fechaFinal=${moment().format('DD/MM/YYYY')}&PreciosPorId=2&RegistrosPorPagina=1000000&OrigenId=-1&Origen=Todos&DestinoId=250&Destino=Sinaloa`, source: false
-  }];
-}
-
-/**
- * Generates a single URL to fetch all historic values. Is extremely intensive.
- * @param {array} potatoes - The potatoes fetched from database
- */
-async function fetchHistoricValues(potatoes) {
-  const calculatedURLS = generateHistoricURLs();
-  for (const { url, source } of calculatedURLS) {
-    for (const { potatosniimid, potatoid } of potatoes) {
-      const urlWithPotatoe = `${url}&ProductoId=${potatosniimid}`;
-      logger.log('info', `Fetching ${urlWithPotatoe}`);
-      const webPageRows = await fetchAndFilterWebpage(urlWithPotatoe);
-      await insertRows(webPageRows, potatoid, 'CALCULADO', source);
-    }
-  }
-}
-
-async function run() {
+exports.handler = async (event) => {
   const potatoes = await fetchPotatoes();
-  await fetchHistoricValues(potatoes);
+  await crawlCalculatedPrice(potatoes);
   await disconnectPool();
+  return { statusCode: 200, body: JSON.stringify('Finished!') };
 }
-
-(async () => {
-  await run();
-})();
-
-module.exports = run;

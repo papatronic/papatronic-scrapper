@@ -64,18 +64,30 @@ CREATE TABLE Prediction (
     FOREIGN KEY (EndMarketID) REFERENCES Market(MarketID)
 );
 
+CREATE TABLE Normalized_Price (
+    PriceID SERIAL PRIMARY KEY NOT NULL,
+    SNIIMDATE DATE NOT NULL,
+    Price NUMERIC(10, 6) NOT NULL,
+    SourceMarketID INT NOT NULL, -- El ID del mercado de orígen
+    EndMarketID INT NOT NULL, -- El ID del mercado de destino
+    PotatoID INT NOT NULL, -- El ID del tipo de la papa a la cual le corresponde el precio
+    FOREIGN KEY (SourceMarketID) REFERENCES Market(MarketID),
+    FOREIGN KEY (EndMarketID) REFERENCES Market(MarketID),
+    FOREIGN KEY (PotatoID) REFERENCES Potato(PotatoID)
+);
+
 CREATE TRIGGER set_timestamp
 BEFORE UPDATE ON Prediction
 FOR EACH ROW
 EXECUTE PROCEDURE trigger_set_timestamp();
 
 CREATE TRIGGER set_timestamp
-BEFORE UPDATE ON Prices
+BEFORE UPDATE ON Price
 FOR EACH ROW
 EXECUTE PROCEDURE trigger_set_timestamp();
 
 CREATE TRIGGER set_timestamp
-BEFORE UPDATE ON Markets
+BEFORE UPDATE ON Market
 FOR EACH ROW
 EXECUTE PROCEDURE trigger_set_timestamp();
 
