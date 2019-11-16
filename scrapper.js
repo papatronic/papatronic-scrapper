@@ -125,11 +125,10 @@ async function fetchAndFilterWebpage(url) {
 function generateURL(sniimPriceType, rowsPerPage = 1000) {
   const year = moment().year();
   const month = moment().month() + 1;
-  const yesterday = `${moment().subtract(1, 'days').format('DD')}/${month}/${year}`;
   const today = `${moment().format('DD')}/${month}/${year}`;
   return [
-    `${config.baseURL}&fechaInicio=${yesterday}&fechaFinal=${today}&PreciosPorId=${sniimPriceType}&RegistrosPorPagina=${rowsPerPage}&OrigenId=25$Origen=Sinaloa&DestinoId=-1&Destino=Todos`,
-    `${config.baseURL}&fechaInicio=${yesterday}&fechaFinal=${today}&PreciosPorId=${sniimPriceType}&RegistrosPorPagina=${rowsPerPage}&OrigenId=-1$Origen=Todos&DestinoId=250&Destino=Sinaloa`,
+    `${config.baseURL}fechaInicio=${today}&fechaFinal=${today}&PreciosPorId=${sniimPriceType}&RegistrosPorPagina=${rowsPerPage}&OrigenId=25&Origen=Sinaloa&DestinoId=-1&Destino=Todos`,
+    `${config.baseURL}fechaInicio=${today}&fechaFinal=${today}&PreciosPorId=${sniimPriceType}&RegistrosPorPagina=${rowsPerPage}&OrigenId=-1&Origen=Todos&DestinoId=250&Destino=Sinaloa`,
   ];
 }
 
@@ -142,16 +141,20 @@ async function crawlCalculatedPrice(potatoes) {
   const urls = generateURL(CALCULATED_PRICE, 50000);
   for (const url of urls) {
     for (const { potatosniimid, potatoid } of potatoes) {
-      logger.log('info', `Fetching ${url}`);
-      const webPageRows = await fetchAndFilterWebpage(url, potatosniimid);
+      const fullURL = `${url}&ProductoId=${potatosniimid}`;
+      logger.log('info', `Fetching URL: ${fullURL}`);
+      const webPageRows = await fetchAndFilterWebpage(fullURL);
       await insertRows(webPageRows, potatoid, 'CALCULADO');
     } 
   }
 }
 
 exports.handler = async (event) => {
+  moment.tz.setDefault('America/Mazatlan');
+  logger.log('info', `Began @ ${moment().format()}}`);
   const potatoes = await fetchPotatoes();
   await crawlCalculatedPrice(potatoes);
   await disconnectPool();
+  logger.log('info', `Finished @ ${moment().format()}}`);
   return { statusCode: 200, body: JSON.stringify('Finished!') };
 }
