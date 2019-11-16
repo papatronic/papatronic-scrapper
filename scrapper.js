@@ -67,13 +67,15 @@ async function insertRows(rows, potatoID, sniimPresentation, source) {
       endMarket = await fetchOrCreateMarket('Sinaloa');
     }
     const values = [...row];
-    values.unshift(moment().format('YYYY-MM-DD'));
-    values.unshift(moment().format('DD-MM-YYYY'));
+    const date = values[0].split('/').reverse().join('-');
+    const firstElement = row[0];
+    values.shift()
+    values.unshift(date);
+    values.unshift(firstElement);
     values.splice(3, 1);
     values[3] = values[3].replace('.', '');
     values[4] = values[4].replace('.', '');
     values[5] = values[5].replace('.', '');
-    console.log({ values })
     try {
       logger.log('info', `Attempting to create price of row: ${values}`);
       const [returnedRow] = await sendQuery(row.length === 7 ? Queries.price.INSERT_PRICE_OBS : Queries.price.INSERT_PRICE_NO_OBS, [...values, potatoID, sourceMarket.marketid, endMarket.marketid, sniimPresentation]);
@@ -127,7 +129,7 @@ async function fetchAndFilterWebpage(url) {
 function generateURL(sniimPriceType, rowsPerPage = 1000) {
   const year = moment().year();
   const month = moment().month() + 1;
-  const today = `${moment().subtract(1, 'day').format('DD')}/${month}/${year}`;
+  const today = `${moment().format('DD')}/${month}/${year}`;
   return [
     { source: true, url: `${config.baseURL}fechaInicio=${today}&fechaFinal=${today}&PreciosPorId=${sniimPriceType}&RegistrosPorPagina=${rowsPerPage}&OrigenId=25&Origen=Sinaloa&DestinoId=-1&Destino=Todos` },
     { source: false, url: `${config.baseURL}fechaInicio=${today}&fechaFinal=${today}&PreciosPorId=${sniimPriceType}&RegistrosPorPagina=${rowsPerPage}&OrigenId=-1&Origen=Todos&DestinoId=250&Destino=Sinaloa` },
@@ -150,16 +152,6 @@ async function crawlCalculatedPrice(potatoes) {
     } 
   }
 }
-
-(async () => {
-  moment.tz.setDefault('America/Mazatlan');
-  logger.log('info', `Began @ ${moment().format()}}`);
-  const potatoes = await fetchPotatoes();
-  await crawlCalculatedPrice(potatoes);
-  await disconnectPool();
-  logger.log('info', `Finished @ ${moment().format()}}`);
-  return { statusCode: 200, body: JSON.stringify('Finished!') };
-})();
 
 exports.handler = async (event) => {
   moment.tz.setDefault('America/Mazatlan');
