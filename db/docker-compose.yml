@@ -9,7 +9,7 @@ services:
     ports:
       - "5432:5432"
     volumes:
-      - "${PATH OF VOLUME DATA}:/bitnami/postgresql"
+      - "/Users/renevidriales/Documents/ITC/papatronic-scrapper/db/data:/bitnami/postgresql"
       - "./schema.sql:/docker-entrypoint-initdb.d/schema.sql"
     networks: 
       - database
