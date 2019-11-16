@@ -151,16 +151,6 @@ async function crawlCalculatedPrice(potatoes) {
   }
 }
 
-(async () => {
-  moment.tz.setDefault('America/Mazatlan');
-  logger.log('info', `Began @ ${moment().format()}}`);
-  const potatoes = await fetchPotatoes();
-  await crawlCalculatedPrice(potatoes);
-  await disconnectPool();
-  logger.log('info', `Finished @ ${moment().format()}}`);
-  return { statusCode: 200, body: JSON.stringify('Finished!') };
-})();
-
 exports.handler = async (event) => {
   moment.tz.setDefault('America/Mazatlan');
   logger.log('info', `Began @ ${moment().format()}}`);
