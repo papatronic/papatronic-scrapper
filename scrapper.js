@@ -52,7 +52,7 @@ async function fetchOrCreateMarket(name) {
  * @param {number} potatoID - Int representing the ID of the Potato which this price references to
  * @param {string} sniimPresentation - Enum (COMERCIAL, CALCULADO) representing the presentation of the fetched values from the webpage. Analogous to sniimPriceType (1 = 'COMERCIAL', 2 = 'CALCULADO')
  */
-async function insertRows(rows, potatoID, sniimPresentation, source) {
+async function insertRows(rows, potatoID, sniimPresentation, source, date) {
   rows.shift();
   rows.shift();
   for (let index = 0, rowsLength = rows.length; index < rowsLength; index++) {
@@ -61,21 +61,22 @@ async function insertRows(rows, potatoID, sniimPresentation, source) {
     let endMarket;
     if (source) {
       sourceMarket = await fetchOrCreateMarket('Sinaloa');
-      endMarket = await fetchOrCreateMarket(row[2]);
+      endMarket = await fetchOrCreateMarket(row[1]);
     } else {
-      sourceMarket = await fetchOrCreateMarket(row[2]);
+      sourceMarket = await fetchOrCreateMarket(row[1]);
       endMarket = await fetchOrCreateMarket('Sinaloa');
     }
     const values = [...row];
-    const date = values[0].split('/').reverse().join('-');
-    const firstElement = row[0];
-    values.shift()
-    values.unshift(date);
+    const dateFormatted = date.split('/').reverse().join('-');
+    const firstElement = date;
+    const marketPresentation = values.shift();
+    values.unshift(marketPresentation);
+    values.unshift(dateFormatted);
     values.unshift(firstElement);
     values.splice(3, 1);
-    values[3] = values[3].replace('.', '');
-    values[4] = values[4].replace('.', '');
-    values[5] = values[5].replace('.', '');
+    values[3] = Number(values[3].replace('.', ''));
+    values[4] = Number(values[4].replace('.', ''));
+    values[5] = Number(values[5].replace('.', ''));
     try {
       logger.log('info', `Attempting to create price of row: ${values}`);
       const [returnedRow] = await sendQuery(row.length === 7 ? Queries.price.INSERT_PRICE_OBS : Queries.price.INSERT_PRICE_NO_OBS, [...values, potatoID, sourceMarket.marketid, endMarket.marketid, sniimPresentation]);
@@ -129,10 +130,11 @@ async function fetchAndFilterWebpage(url) {
 function generateURL(sniimPriceType, rowsPerPage = 1000) {
   const year = moment().year();
   const month = moment().month() + 1;
-  const today = `${moment().format('DD')}/${month}/${year}`;
+  const today = `${moment().subtract(1, 'day').format('DD')}/${month}/${year}`;
   return [
     { source: true, url: `${config.baseURL}fechaInicio=${today}&fechaFinal=${today}&PreciosPorId=${sniimPriceType}&RegistrosPorPagina=${rowsPerPage}&OrigenId=25&Origen=Sinaloa&DestinoId=-1&Destino=Todos` },
     { source: false, url: `${config.baseURL}fechaInicio=${today}&fechaFinal=${today}&PreciosPorId=${sniimPriceType}&RegistrosPorPagina=${rowsPerPage}&OrigenId=-1&Origen=Todos&DestinoId=250&Destino=Sinaloa` },
+    { date: today }
   ];
 }
 
@@ -143,22 +145,50 @@ function generateURL(sniimPriceType, rowsPerPage = 1000) {
 async function crawlCalculatedPrice(potatoes) {
   const CALCULATED_PRICE = 2;
   const urls = generateURL(CALCULATED_PRICE, 50000);
+  const last = urls.pop();
   for (const { url, source } of urls) {
     for (const { potatosniimid, potatoid } of potatoes) {
       const fullURL = `${url}&ProductoId=${potatosniimid}`;
       logger.log('info', `Fetching URL: ${fullURL}`);
       const webPageRows = await fetchAndFilterWebpage(fullURL);
-      await insertRows(webPageRows, potatoid, 'CALCULADO', source);
+      await insertRows(webPageRows, potatoid, 'CALCULADO', source, last.date);
     } 
   }
 }
 
+/**
+ * This function get the last three days price and returns an average of the prices.
+ */
+async function getPricesAverage() {
+  
+}
+
+(async () => {
+  moment.tz.setDefault('America/Mazatlan');
+  logger.log('info', `Began @ ${moment().format()}}`);
+  const isoWeekDay = moment().isoWeekday();
+  if (isoWeekDay !== 7 && isoWeekDay !== 6) {
+    const potatoes = await fetchPotatoes();
+    await crawlCalculatedPrice(potatoes);
+    await disconnectPool();
+    logger.log('info', `Finished @ ${moment().format()}}`);
+    return { statusCode: 200, body: JSON.stringify('Finished!') };
+  } else {
+
+  }
+})();
+
 exports.handler = async (event) => {
   moment.tz.setDefault('America/Mazatlan');
   logger.log('info', `Began @ ${moment().format()}}`);
-  const potatoes = await fetchPotatoes();
-  await crawlCalculatedPrice(potatoes);
-  await disconnectPool();
-  logger.log('info', `Finished @ ${moment().format()}}`);
-  return { statusCode: 200, body: JSON.stringify('Finished!') };
+  const isoWeekDay = day.isoWeekday();
+  if (isoWeekDay !== 7 && isoWeekDay !== 6) {
+    const potatoes = await fetchPotatoes();
+    await crawlCalculatedPrice(potatoes);
+    await disconnectPool();
+    logger.log('info', `Finished @ ${moment().format()}}`);
+    return { statusCode: 200, body: JSON.stringify('Finished!') };
+  } else {
+
+  }
 }
