@@ -163,21 +163,6 @@ async function getPricesAverage() {
   
 }
 
-(async () => {
-  moment.tz.setDefault('America/Mazatlan');
-  logger.log('info', `Began @ ${moment().format()}}`);
-  const isoWeekDay = moment().isoWeekday();
-  if (isoWeekDay !== 7 && isoWeekDay !== 6) {
-    const potatoes = await fetchPotatoes();
-    await crawlCalculatedPrice(potatoes);
-    await disconnectPool();
-    logger.log('info', `Finished @ ${moment().format()}}`);
-    return { statusCode: 200, body: JSON.stringify('Finished!') };
-  } else {
-
-  }
-})();
-
 exports.handler = async (event) => {
   moment.tz.setDefault('America/Mazatlan');
   logger.log('info', `Began @ ${moment().format()}}`);
@@ -189,6 +174,6 @@ exports.handler = async (event) => {
     logger.log('info', `Finished @ ${moment().format()}}`);
     return { statusCode: 200, body: JSON.stringify('Finished!') };
   } else {
-
+    // TODO: Implement last three days average.
   }
 }
